@@ -2,3 +2,5 @@ venv/
 __pycache__/
 *.pyc
 api_keys.db
+.env  # Add if in remote and relevant
+*.log  # Add if in remote and useful
