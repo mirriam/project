@@ -30,4 +30,4 @@ jobs:
 
     - name: Run tests
       run: |
-        python -m unittest tests/test_paraphrase.py
+        python -m unittest paraphrase_app.py
