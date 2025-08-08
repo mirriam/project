@@ -1,1 +1,1 @@
-web: gunicorn paraphrase_app:app
+web: gunicorn script:app
