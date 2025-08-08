@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 device = torch.device("cpu")
-model_name = "google/flan-t5-large"
+model_name = "google/flan-t5-small"
 try:
     logger.info("Loading tokenizer and model...")
     tokenizer = AutoTokenizer.from_pretrained(model_name)
