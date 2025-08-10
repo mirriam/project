@@ -5,12 +5,12 @@ import gradio as gr
 
 # Initialize model and tokenizer
 device = torch.device("cpu")  # Hugging Face Spaces usually run on CPU unless GPU requested
-model_name = "google/flan-t5-large"
+model_name = "microsoft/Phi-3-mini-128k-instruct"
 
 try:
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-    #model = AutoModelForCausalLM.from_pretrained(model_name)
+    #model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name)
     model.eval()
     model.to(device)
 except Exception as e:
