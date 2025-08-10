@@ -3,7 +3,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import gradio as gr
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-DEFAULT_MODEL = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+DEFAULT_MODEL = "openai-community/gpt2"
 
 # Try loading local model once at startup
 try:
