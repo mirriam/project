@@ -3,7 +3,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import gradio as gr
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-DEFAULT_MODEL = "openai-community/gpt2"
+DEFAULT_MODEL = "Qwen/Qwen3-4B-Thinking-2507"
 
 # Try loading local model once at startup
 try:
