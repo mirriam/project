@@ -1,20 +1,28 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+import gradio as gr
 
 # Initialize model and tokenizer
-device = torch.device("cpu")  # Always CPU
+device = torch.device("cpu")  # Hugging Face Spaces usually run on CPU unless GPU requested
 model_name = "google/flan-t5-large"
+
 try:
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
     model.eval()
     model.to(device)
 except Exception as e:
-    print(f"Error loading model or tokenizer: {e}")
-    exit(1)
+    raise RuntimeError(f"Error loading model or tokenizer: {e}")
 
-def generate_response(prompt, max_length=100):
+def generate_response(user_input, max_length=100):
     try:
+        # Create prompt with context
+        prompt = f"""
+You are a helpful assistant. Respond to the user's input in a conversational and friendly manner.
+
+User: {user_input}
+Assistant:
+"""
         # Tokenize input
         inputs = tokenizer(
             prompt,
@@ -42,35 +50,20 @@ def generate_response(prompt, max_length=100):
     except Exception as e:
         return f"Error generating response: {e}"
 
-def chatbot():
-    print("Welcome to the Flan-T5 Chatbot!")
-    print("Type 'quit' to exit.")
-    
-    while True:
-        try:
-            user_input = input("You: ")
-            if user_input.lower() == 'quit':
-                print("Goodbye!")
-                break
-            if not user_input.strip():
-                print("Please enter a valid input.")
-                continue
-                
-            # Create prompt with context
-            prompt = f"""
-You are a helpful assistant. Respond to the user's input in a conversational and friendly manner.
+# Gradio UI
+with gr.Blocks() as demo:
+    gr.Markdown("# 💬 Flan-T5 Chatbot\nType a message and chat with the AI.")
+    chatbot = gr.Chatbot()
+    msg = gr.Textbox(label="Your message")
+    clear = gr.Button("Clear")
 
-User: {user_input}
-Assistant: """
-            
-            response = generate_response(prompt)
-            print(f"Bot: {response}")
-            
-        except  KeyboardInterrupt:
-            print("\nGoodbye!")
-            break
-        except Exception as e:
-            print(f"An error occurred: {e}")
+    def respond(message, chat_history):
+        bot_response = generate_response(message)
+        chat_history.append((message, bot_response))
+        return "", chat_history
+
+    msg.submit(respond, [msg, chatbot], [msg, chatbot])
+    clear.click(lambda: None, None, chatbot, queue=False)
 
 if __name__ == "__main__":
-    chatbot()
+    demo.launch()
