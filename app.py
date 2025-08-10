@@ -1,58 +1,52 @@
 import torch
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForCausalLM
 import gradio as gr
 
-# Initialize model and tokenizer
-device = torch.device("cpu")  # Hugging Face Spaces usually run on CPU unless GPU requested
-model_name = "EleutherAI/gpt-neo-2.7B"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEFAULT_MODEL = "EleutherAI/gpt-neo-2.7B"
 
+# Try loading local model once at startup
 try:
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-    model.eval()
+    tokenizer = AutoTokenizer.from_pretrained(DEFAULT_MODEL)
+    model = AutoModelForCausalLM.from_pretrained(DEFAULT_MODEL)
     model.to(device)
+    model.eval()
+    local_model_loaded = True
+    print("Model loaded successfully.")
 except Exception as e:
-    raise RuntimeError(f"Error loading model or tokenizer: {e}")
+    print(f"Local model loading failed: {e}")
+    local_model_loaded = False
 
 def generate_response(user_input, max_length=100):
+    if not local_model_loaded:
+        return "Model is not loaded, cannot generate response."
     try:
-        # Create prompt with context
-        prompt = f"""
-You are a helpful assistant. Respond to the user's input in a conversational and friendly manner.
-
-User: {user_input}
-Assistant:
-"""
-        # Tokenize input
-        inputs = tokenizer(
-            prompt,
-            return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=512
-        )
-        inputs = inputs.to(device)
+        # For causal LM, you can format the prompt conversationally like this:
+        prompt = f"User: {user_input}\nAssistant:"
         
-        # Generate response
+        inputs = tokenizer(prompt, return_tensors="pt").to(device)
+        
         outputs = model.generate(
             input_ids=inputs["input_ids"],
-            attention_mask=inputs["attention_mask"],
-            max_length=max_length,
+            attention_mask=inputs["attention_mask"] if "attention_mask" in inputs else None,
+            max_length=inputs["input_ids"].shape[1] + max_length,
             num_beams=5,
-            length_penalty=1.0,
+            no_repeat_ngram_size=2,
             early_stopping=True,
-            no_repeat_ngram_size=2
+            pad_token_id=tokenizer.eos_token_id,
         )
         
-        # Decode response
-        response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        return response.strip()
+        # The output includes the prompt, so remove it to return only the assistant response
+        generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        # Remove the prompt part
+        response = generated_text[len(prompt):].strip()
+        
+        return response
     except Exception as e:
         return f"Error generating response: {e}"
 
-# Gradio UI
 with gr.Blocks() as demo:
-    gr.Markdown("# 💬 Flan-T5 Chatbot\nType a message and chat with the AI.")
+    gr.Markdown("# 💬 GPT-Neo 2.7B Chatbot\nType a message and chat with the AI.")
     chatbot = gr.Chatbot()
     msg = gr.Textbox(label="Your message")
     clear = gr.Button("Clear")
