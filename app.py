@@ -5,7 +5,7 @@ import gradio as gr
 
 # Initialize model and tokenizer
 device = torch.device("cpu")  # Hugging Face Spaces usually run on CPU unless GPU requested
-model_name = "microsoft/Phi-3-mini-128k-instruct"
+model_name = "meta-llama/Llama-3.2-3B"
 
 try:
     tokenizer = AutoTokenizer.from_pretrained(model_name)
